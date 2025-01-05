@@ -22,6 +22,7 @@ import { Input } from "../components/ui/input";
 import Textarea from "./ui/textarea/Textarea.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
+import { dialogState } from "../composable/dialog";
 
 const formSchema = toTypedSchema(
   z.object({
@@ -36,18 +37,21 @@ const formSchema = toTypedSchema(
   })
 );
 
+const [isOpen, closeDialog] = dialogState();
+
 const props = defineProps<{
   onSubmit: (values: { title: string; description: string }) => void;
 }>();
 
 const handleFormSubmit = (params: { title: string; description: string }) => {
   props.onSubmit(params);
+  closeDialog();
 };
 </script>
 
 <template>
   <Form v-slot="{ handleSubmit }" :validation-schema="formSchema">
-    <Dialog>
+    <Dialog v-model:open="isOpen">
       <DialogTrigger as-child>
         <Button variant="outline"> <PlusIcon /> Criar tarefa </Button>
       </DialogTrigger>

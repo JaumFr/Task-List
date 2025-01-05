@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import TaskList from "./components/TaskList.vue";
-import DialogForm from "./components/DialogForm.vue";
 import DialogEditForm from "./components/DialogEditForm.vue";
-import { Input } from "./components/ui/input";
-import { MagnifyingGlassIcon } from "@radix-icons/vue";
+import DialogForm from "./components/DialogForm.vue";
+import { dialogState } from "./composable/dialog";
+import TaskList from "./components/TaskList.vue";
 import { ref } from "vue";
 
 type Task = {
@@ -23,9 +22,9 @@ const invoices: Task[] = [
   { id: 7, status: "Unpaid", title: "$300.00", description: "Credit Card" }
 ];
 
-const isCreateDialogOpen = ref<boolean>(false);
+const [isOpen, closeDialog] = dialogState();
+
 const isEditDialogOpen = ref<boolean>(false);
-const currentEditTask = ref<Task | null>(null);
 
 const handleSubmit = (params: { title: string; description: string }): void => {
   console.log("New Task:", params);
@@ -36,14 +35,14 @@ const handleActions = (action: string, taskId: number): void => {
 
   if (action === "edit") {
     const taskToEdit = invoices.find((invoice) => invoice.id === taskId);
-    if (taskToEdit) {
-      currentEditTask.value = taskToEdit;
-      isEditDialogOpen.value = true;
-    }
+
+    isOpen.value = true;
+    console.log("Task to Edit:", taskToEdit);
   }
 };
 
 const handleEditSubmit = (updatedTask: {
+  status: string;
   title: string;
   description: string;
 }): void => {
@@ -57,22 +56,8 @@ const handleEditSubmit = (updatedTask: {
     class="flex h-screen w-screen flex-col items-center justify-center gap-8 bg-neutral-100 p-20"
   >
     <div class="flex w-full justify-end gap-4">
-      <div class="relative w-full max-w-sm items-center">
-        <Input
-          type="text"
-          placeholder="Pesquisar tarefa..."
-          class="bg-white pl-10"
-        />
-        <span
-          class="absolute inset-y-0 start-0 flex items-center justify-center px-2"
-        >
-          <MagnifyingGlassIcon class="size-6 text-muted-foreground" />
-        </span>
-      </div>
-
       <DialogForm
-        :is-open="isCreateDialogOpen"
-        :onSubmit="
+        :on-submit="
           ({ title, description }) => handleSubmit({ title, description })
         "
       />
@@ -81,11 +66,12 @@ const handleEditSubmit = (updatedTask: {
     <TaskList :invoices="invoices" :handle-action="handleActions" />
 
     <DialogEditForm
-      v-if="currentEditTask"
-      :task="currentEditTask"
-      :is-open="isEditDialogOpen"
-      @close="isEditDialogOpen = false"
-      @submit="handleEditSubmit"
+      :is-open="isOpen"
+      :is-close="closeDialog"
+      :on-submit="
+        ({ status, title, description }) =>
+          handleEditSubmit({ status, title, description })
+      "
     />
   </div>
 </template>
